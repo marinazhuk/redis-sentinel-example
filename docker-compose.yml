@@ -1,0 +1,80 @@
+version: '3.8'
+services:
+  demo-app-service:
+    container_name: demo-app-service
+    build: ./demo-app-service
+    ports:
+      - 8080:8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/products?allowPublicKeyRetrieval=true
+      - SPRING_DATA_REDIS_SENTINEL_MASTER=redismaster
+      - SPRING_DATA_REDIS_SENTINEL_NODES=sentinel1:26379,sentinel2:26380,sentinel3:26381
+    depends_on:
+      - mysqldb
+      - sentinel1
+      - sentinel2
+      - sentinel3
+    volumes:
+      - .m2:/root/.m2
+
+  mysqldb:
+    image: mysql:8.2.0
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: products
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin
+      MYSQL_ROOT_PASSWORD: admin
+
+
+  redis-master:
+    image: redis:7.2-alpine
+    volumes:
+      - "./.data:/data"
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 2mb --maxmemory-policy allkeys-lfu
+
+  redis-slave1:
+    image: redis:7.2-alpine
+    volumes:
+      - "./.data:/data"
+    depends_on:
+      - redis-master
+    command: redis-server --slaveof redis-master 6379
+
+  redis-slave2:
+    image: redis:7.2-alpine
+    volumes:
+      - "./.data:/data"
+    depends_on:
+      - redis-master
+    command: redis-server --slaveof redis-master 6379
+
+  sentinel1:
+    image: redis:7.2-alpine
+    ports:
+      - "26379:26379"
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    volumes:
+      - ./redis-sentinel/sentinel1.conf:/usr/local/etc/redis/sentinel.conf
+    hostname: sentinel1
+
+  sentinel2:
+    image: redis:7.2-alpine
+    ports:
+      - "26380:26380"
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    volumes:
+      - ./redis-sentinel/sentinel2.conf:/usr/local/etc/redis/sentinel.conf
+    hostname: sentinel2
+
+  sentinel3:
+    image: redis:7.2-alpine
+    ports:
+      - "26381:26381"
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    volumes:
+      - ./redis-sentinel/sentinel3.conf:/usr/local/etc/redis/sentinel.conf
+    hostname: sentinel3

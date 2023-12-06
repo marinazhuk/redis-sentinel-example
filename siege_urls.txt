@@ -1,0 +1,10 @@
+http://localhost:8080/products/1
+http://localhost:8080/products/2
+http://localhost:8080/products/3
+http://localhost:8080/products/4
+http://localhost:8080/products/5
+http://localhost:8080/products/6
+http://localhost:8080/products/7
+http://localhost:8080/products/8
+http://localhost:8080/products/9
+http://localhost:8080/products/10
